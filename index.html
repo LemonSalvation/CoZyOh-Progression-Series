@@ -133,41 +133,47 @@
 }
 
 .modal-content-wrapper {
-    width: auto;
-    max-width: 360px;      /* card-sized modal */
-    max-height: 90vh;      /* never exceed viewport height */
-    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 90vw;
+    max-height: 90vh;
 }
 
 .modal-content {
     background: #2a2b33;
     border-radius: 16px;
-    padding: 20px;
-    width: 100%;
+    padding: 16px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    position: relative;    /* ensures close button stays inside modal */
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    max-width: 100%;
+    max-height: 100%;
 }
 
-..modal-content img {
+.modal-content img {
     max-width: 100%;
-    max-height: 55vh;     /* 👈 CRITICAL */
+    max-height: 80vh;   /* 👈 scales image to fit screen */
     object-fit: contain;
     border-radius: 12px;
-    display: block;
-    margin: 0 auto 10px;
 }
 
 .close {
-    position: sticky;       /* sticks to top when scrolling inside modal */
-    top: 0;
-    right: 0;
-    float: right;
-    cursor: pointer;
-    font-size: 1.2rem;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
     background: #3a3b45;
-    padding: 4px 8px;
+    color: #eaeaf0;
+    border: none;
     border-radius: 8px;
-    z-index: 10;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
 }
 
 
@@ -533,5 +539,6 @@ loadCSV("pack_winners.csv", "packTable", false);
 
 </body>
 </html>
+
 
 
