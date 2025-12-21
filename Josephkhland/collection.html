@@ -156,6 +156,23 @@ h1 {
     padding: 6px 10px;
     font-size: 0.95rem;
 }
+
+.download-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    background: #2a2b33;
+    color: #eaeaf0;
+    font-family: 'Nunito', sans-serif;
+    padding: 10px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.download-btn:hover {
+    background: #3a3b45;
+    transform: translateY(-1px);
+}
 </style>
 </head>
 
@@ -170,6 +187,10 @@ h1 {
     <select id="deckSelect"></select>
 </div>
 
+<a href="collection.ydk" download="Josephkhland_Collection.ydk" class="download-btn">
+    ⬇ Download Full Collection (.ydk)
+</a>
+    
 <div class="layout">
     <div id="deck" class="deck-area"></div>
 
@@ -326,3 +347,4 @@ loadDeckList();
 
 </body>
 </html>
+
