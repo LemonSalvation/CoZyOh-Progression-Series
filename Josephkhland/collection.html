@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cozy Yu-Gi-Oh Deck Viewer</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    background: #1e1f26;
+    color: #eaeaf0;
+    font-family: 'Inter', sans-serif;
+    padding: 40px;
+}
+
+h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 2.4rem;
+    margin-bottom: 30px;
+}
+
+.deck-section {
+    margin-bottom: 50px;
+}
+
+.deck-section h2 {
+    font-family: 'Nunito', sans-serif;
+    margin-bottom: 15px;
+    color: #cdd6f4;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 18px;
+}
+
+.card {
+    background: #2a2b33;
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+.card img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+.card-name {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    text-align: center;
+}
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 40px;
+}
+
+.deck-area {
+    min-width: 0;
+}
+
+.preview-panel {
+    background: #2a2b33;
+    border-radius: 16px;
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 40px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+.preview-panel img {
+    width: 100%;
+    border-radius: 12px;
+}
+
+.preview-name {
+    margin-top: 12px;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.preview-placeholder {
+    color: #aaa;
+    text-align: center;
+    padding: 40px 10px;
+    font-style: italic;
+}
+.preview-panel img {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.preview-stats {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.preview-stats div {
+    margin-bottom: 6px;
+}
+
+.preview-label {
+    color: #a6adc8;
+    font-weight: 600;
+}
+
+.preview-effect {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #eaeaf0;
+    background: #1e1f26;
+    padding: 10px;
+    border-radius: 10px;
+    white-space: pre-wrap;
+}
+.preview-stats span.preview-label {
+    min-width: 90px;
+    display: inline-block;
+}
+
+.deck-selector {
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.deck-selector label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+}
+
+.deck-selector select {
+    background: #2a2b33;
+    color: #eaeaf0;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.95rem;
+}
+</style>
+</head>
+
+<body>
+
+<body>
+
+<h1>🎴 Cards Collection</h1>
+
+<div class="deck-selector">
+    <label for="deckSelect">Select Pack:</label>
+    <select id="deckSelect"></select>
+</div>
+
+<div class="layout">
+    <div id="deck" class="deck-area"></div>
+
+    <div class="preview-panel" id="preview">
+        <div class="preview-placeholder">
+            Hover a card to preview
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let CURRENT_DECK_FILE = null;
+let CARD_DATA = {};
+async function loadDeck(filename) {
+    CURRENT_DECK_FILE = filename;
+
+    document.getElementById("deck").innerHTML = "Loading deck…";
+    document.getElementById("preview").innerHTML =
+        `<div class="preview-placeholder">Hover a card to preview</div>`;
+
+    const response = await fetch(filename);
+    const text = await response.text();
+
+    const lines = text.split("\n").map(l => l.trim());
+    let section = null;
+
+    const deck = { main: [], extra: [], side: [] };
+
+    for (let line of lines) {
+        if (line === "#main") section = "main";
+        else if (line === "#extra") section = "extra";
+        else if (line === "#side") section = "side";
+        else if (line && !line.startsWith("#")) {
+            deck[section].push(line);
+        }
+    }
+
+    renderDeck(deck);
+}
+
+async function fetchCardData(cardIds) {
+    const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardIds.join(",")}`;
+    const response = await fetch(url);
+    const json = await response.json();
+    return json.data;
+}
+
+async function renderDeck(deck) {
+    const allIds = [...deck.main, ...deck.extra, ...deck.side];
+    const uniqueIds = [...new Set(allIds)];
+
+    const cards = await fetchCardData(uniqueIds);
+    const cardMap = Object.fromEntries(cards.map(c => [c.id, c]));
+    CARD_DATA = Object.fromEntries(cards.map(c => [c.id, c]));
+    function renderSection(title, ids) {
+        if (ids.length === 0) return "";
+
+        const counts = {};
+        ids.forEach(id => counts[id] = (counts[id] || 0) + 1);
+
+        let html = `
+            <div class="deck-section">
+                <h2>${title} (${ids.length})</h2>
+                <div class="card-grid">
+        `;
+
+        for (let id in counts) {
+            const card = cardMap[id];
+            html += `
+                <div class="card" onmouseenter="showPreview(${card.id})">
+                    <img src="${card.card_images[0].image_url_small}">
+                    <div class="card-name">
+                        ${card.name} ×${counts[id]}
+                    </div>
+                </div>
+            `;
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+        return html;
+    }
+
+    document.getElementById("deck").innerHTML =
+        renderSection("Main Deck", deck.main) +
+        renderSection("Extra Deck", deck.extra) +
+        renderSection("Side Deck", deck.side);
+}
+
+function showPreview(cardId) {
+    const card = CARD_DATA[cardId];
+    if (!card) return;
+
+    const img = card.card_images[0].image_url;
+
+    let statsHtml = "";
+
+    if (card.type.includes("Monster")) {
+        statsHtml = `
+            <div class="preview-stats">
+                <div><span class="preview-label">Type:</span> ${card.race}</div>
+                <div><span class="preview-label">Attribute:</span> ${card.attribute}</div>
+
+                ${card.level ? `<div><span class="preview-label">Level:</span> ${card.level}</div>` : ""}
+                ${card.linkval ? `<div><span class="preview-label">Link:</span> ${card.linkval}</div>` : ""}
+                ${card.atk !== null ? `<div><span class="preview-label">ATK:</span> ${card.atk}</div>` : ""}
+                ${card.def !== null ? `<div><span class="preview-label">DEF:</span> ${card.def}</div>` : ""}
+            </div>
+        `;
+    } else {
+        statsHtml = `
+            <div class="preview-stats">
+                <div><span class="preview-label">Card Type:</span> ${card.type}</div>
+            </div>
+        `;
+    }
+
+    document.getElementById("preview").innerHTML = `
+        <img src="${img}">
+        <div class="preview-name">${card.name}</div>
+        ${statsHtml}
+        <div class="preview-effect">${card.desc}</div>
+    `;
+}
+
+// Start
+async function loadDeckList() {
+    const response = await fetch("packs_opening.json");
+    const decks = await response.json();
+
+    const select = document.getElementById("deckSelect");
+    select.innerHTML = "";
+
+    decks.forEach((deck, index) => {
+        const option = document.createElement("option");
+        option.value = deck.file;
+        option.textContent = deck.name;
+        select.appendChild(option);
+
+        if (index === 0) CURRENT_DECK_FILE = deck.file;
+    });
+
+    select.addEventListener("change", () => {
+        loadDeck(select.value);
+    });
+
+    loadDeck(CURRENT_DECK_FILE);
+}
+loadDeckList();
+</script>
+
+</body>
+</html>

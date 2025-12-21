@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Co-Zy-Oh! Dashboard</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables -->
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- PapaParse -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: #1e1f26;
+            color: #eaeaf0;
+            font-family: 'Inter', sans-serif;
+            padding: 40px;
+        }
+
+        h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.4rem;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-family: 'Nunito', sans-serif;
+            margin-top: 50px;
+            margin-bottom: 15px;
+            color: #cdd6f4;
+        }
+
+        .table-card {
+            background: #2a2b33;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+
+        /* DataTables overrides */
+        table.dataTable {
+            border-collapse: collapse;
+        }
+
+        table.dataTable thead {
+            background: #313244;
+        }
+
+        table.dataTable thead th {
+            color: #f5f5fa;
+            font-weight: 600;
+            border-bottom: none;
+        }
+
+        table.dataTable tbody tr {
+            background: #2a2b33;
+            transition: background 0.2s ease;
+        }
+
+        table.dataTable tbody tr:hover {
+            background: #3a3b45;
+        }
+
+        table.dataTable tbody td {
+            border-top: 1px solid #3f4050;
+        }
+
+        .dataTables_filter input {
+            background: #1e1f26;
+            border: 1px solid #444;
+            color: #eaeaf0;
+            border-radius: 6px;
+            padding: 6px;
+        }
+
+        .dataTables_length select {
+            background: #1e1f26;
+            color: #eaeaf0;
+            border-radius: 6px;
+        }
+
+        table.dataTable td:nth-child(3) {
+    background: rgba(249, 226, 175, 0.08);
+        }
+    .top-nav {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #eaeaf0;
+    font-family: 'Nunito', sans-serif;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #2a2b33;
+    transition: background 0.2s ease;
+}
+
+.nav-item:hover {
+    background: #3a3b45;
+}
+
+.nav-item.active {
+    background: #45475a;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 10px; /* ensures some margin on small screens */
+}
+
+.hidden {
+    display: none;
+}
+
+.modal-content-wrapper {
+    max-width: 90vw;       /* never wider than viewport */
+    max-height: 90vh;      /* never taller than viewport */
+    overflow-y: auto;      /* scroll if content too tall */
+    display: flex;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #2a2b33;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    position: relative;    /* ensures close button stays inside modal */
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+.close {
+    position: sticky;       /* sticks to top when scrolling inside modal */
+    top: 0;
+    right: 0;
+    float: right;
+    cursor: pointer;
+    font-size: 1.2rem;
+    background: #3a3b45;
+    padding: 4px 8px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+
+.top-nav {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.nav-item {
+    position: relative;
+    text-decoration: none;
+    color: #eaeaf0;
+    font-family: 'Nunito', sans-serif;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #2a2b33;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.nav-item:hover {
+    background: #3a3b45;
+}
+
+.nav-item.active {
+    background: #45475a;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    position: absolute;
+    top: 110%;
+    left: 0;
+    background: #2a2b33;
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    min-width: 180px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    z-index: 200;
+}
+
+.dropdown-menu a {
+    color: #eaeaf0;
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background: #3a3b45;
+}
+
+/* Show dropdown on hover */
+.dropdown:hover .dropdown-menu {
+    display: flex;
+}
+.preview-btn {
+    background: #45475a;
+    color: #eaeaf0;
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.preview-btn:hover {
+    background: #585b70;
+}
+   
+    </style>
+</head>
+<body>
+<nav class="top-nav">
+    <a href="index.html" class="nav-item active">📊 Dashboard</a>
+    <div class="nav-item dropdown">
+        🎴 Collection ▾
+        <div class="dropdown-menu">
+            <a href="Josephkhland/collection.html">Josephkhland</a>
+            <a href="ChrisMC/collection.html">ChrisMC</a>
+            <a href="Bread/collection.html">Mighty Bread</a>
+            <a href="Cozy/collection.html">Cozy</a>
+            <a href="Oathkeeper/collection.html">Oathkeeper</a>
+        </div>
+    </div>
+</nav>
+    
+
+
+<h1>Co-Zy-Oh! Progression Series</h1>
+
+<h2>Ban List</h2>
+<div class="table-card">
+    <table id="banTable" class="display" style="width:100%"></table>
+</div>
+
+<h2>Round Winners</h2>
+<div class="table-card">
+    <table id="packTable" class="display" style="width:100%"></table>
+</div>
+
+<h2>Rankings</h2>
+<div class="table-card" style="height: 360px;">
+    <canvas id="rankingsChart"></canvas>
+</div>
+
+<div id="cardModal" class="modal hidden">
+    <div class="modal-content-wrapper">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal()">✖</button>
+            <div id="modalBody">Loading…</div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+function loadCSV(csvFile, tableId, isBanList = false) {
+    Papa.parse(csvFile, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+
+            let columns = Object.keys(results.data[0]).map(key => ({
+                title: key,
+                data: key
+            }));
+
+            if (isBanList) {
+                columns.push({
+                    title: "Preview",
+                    data: null,
+                    orderable: false,
+                    render: function(_, __, row) {
+                        if (!row.CardId) return "";
+                        return `
+                            <button class="preview-btn"
+                                    onclick="previewCard('${row.CardId.trim()}')">
+                                👁 View
+                            </button>
+                        `;
+                    }
+                });
+            }
+
+            $('#' + tableId).DataTable({
+                data: results.data,
+                columns: columns,
+                paging: false,
+                searching: true,
+                info: false
+            });
+        }
+    });
+}
+
+function loadBanList(csvFile, tableId) {
+    Papa.parse(csvFile, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+
+            $('#' + tableId).DataTable({
+                data: results.data,
+                paging: false,
+                searching: true,
+                info: false,
+
+                columns: [
+                    { title: "Card", data: "Card" },
+                    { title: "CardId", data: "CardId", visible: false },
+                    { title: "Round", data: "Round" },
+                    { title: "Player", data: "Player" },
+                    {
+                        title: "Preview",
+                        data: null,
+                        orderable: false,
+                        render: function (_, __, row) {
+                            if (!row.CardId) return "";
+                            return `
+                                <button class="preview-btn"
+                                    onclick="previewCard('${row.CardId.trim()}')">
+                                    👁 View
+                                </button>
+                            `;
+                        }
+                    }
+                ]
+            });
+        }
+    });
+}
+
+async function previewCard(cardId) {
+    console.log("Previewing cardId:", cardId);
+
+    if (!cardId) {
+        alert("Invalid Card ID");
+        return;
+    }
+
+    const modal = document.getElementById("cardModal");
+    const body = document.getElementById("modalBody");
+
+    modal.classList.remove("hidden");
+    body.innerHTML = "Loading…";
+
+    try {
+        const response = await fetch(
+            `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardId}`
+        );
+
+        const json = await response.json();
+
+        if (!json.data || !json.data.length) {
+            body.innerHTML = "Card not found.";
+            return;
+        }
+
+        const card = json.data[0];
+
+        body.innerHTML = `
+            <img src="${card.card_images[0].image_url}">
+            <h3>${card.name}</h3>
+            <p>${card.desc}</p>
+        `;
+    } catch (err) {
+        body.innerHTML = "Error loading card.";
+        console.error(err);
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById("cardModal");
+    modal.classList.add("hidden");
+}
+const trophyPlugin = {
+    id: "trophyLine",
+    afterDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+
+        const y = scales.y.getPixelForValue(8);
+
+        ctx.save();
+        ctx.font = "18px serif";
+        ctx.fillStyle = "gold";
+        ctx.fillText("🏆", chartArea.right + 6, y + 6);
+        ctx.restore();
+    }
+};
+
+Papa.parse("rankings.csv", {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+
+        // Sort players by points DESC
+        const sorted = results.data
+            .map(r => ({
+                player: r.Player,
+                points: Number(r.Points)
+            }))
+            .sort((a, b) => b.points - a.points);
+
+        const players = sorted.map(r => r.player);
+        const points = sorted.map(r => r.points);
+
+        const ctx = document.getElementById("rankingsChart");
+
+        const chart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: players,
+                datasets: [{
+                    label: "Points",
+                    data: points,
+                    barThickness: 28,        // 👈 slimmer bars
+                    maxBarThickness: 32,
+                    borderRadius: 6,
+                    backgroundColor: players.map(() => "#89b4fa")
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `Points: ${ctx.raw}`
+                        }
+                    }
+                },
+
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 8,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        title: {
+                            display: true,
+                            text: "Points"
+                        },
+                        grid: {
+                            color: ctx =>
+                                ctx.tick.value === 8
+                                    ? "rgba(255,215,0,0.7)"
+                                    : "rgba(255,255,255,0.05)",
+                            borderDash: ctx =>
+                                ctx.tick.value === 8 ? [6, 6] : []
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                weight: "600"
+                            }
+                        }
+                    }
+                },
+
+                onHover: (event, elements) => {
+                    if (elements.length) {
+                        highlightBar(chart, elements[0].index);
+                    }
+                },
+
+                onClick: (event, elements) => {
+                    if (elements.length) {
+                        highlightBar(chart, elements[0].index);
+                    }
+                }
+            },
+            plugins: [trophyPlugin]
+        });
+
+        function highlightBar(chart, index) {
+            chart.data.datasets[0].backgroundColor =
+                chart.data.datasets[0].data.map((_, i) =>
+                    i === index ? "#f9e2af" : "#89b4fa"
+                );
+            chart.update();
+        }
+    }
+});
+
+// Load all tables
+loadBanList("banlist.csv", "banTable");
+loadCSV("pack_winners.csv", "packTable", false);
+</script>
+
+
+</body>
+</html>
